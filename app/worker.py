@@ -5,7 +5,6 @@ import time
 from redis import Redis
 from redis.exceptions import ConnectionError
 from rq import Queue, Worker
-from rq.connections import Connection
 
 from app.settings import settings
 
@@ -22,9 +21,9 @@ def main() -> None:
         except Exception:
             time.sleep(2)
 
-    with Connection(redis):
-        worker = Worker([Queue("downloads")])
-        worker.work(with_scheduler=False)
+    queue = Queue("downloads", connection=redis)
+    worker = Worker([queue], connection=redis)
+    worker.work(with_scheduler=False)
 
 
 if __name__ == "__main__":
