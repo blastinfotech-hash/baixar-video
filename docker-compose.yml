@@ -1,0 +1,43 @@
+services:
+  web:
+    build: .
+    environment:
+      REDIS_URL: redis://blast_redis:6379/0
+      DOWNLOAD_DIR: /data
+      JOB_TTL_HOURS: "24"
+      CLEAN_INTERVAL_SECONDS: "3600"
+      PUBLIC_BASE_URL: "https://baixar.blastinfo.cloud"
+      BASIC_AUTH_USER: ""
+      BASIC_AUTH_PASS: ""
+      PORT: "8090"
+    volumes:
+      - baixar_data:/data
+    expose:
+      - "8090"
+    restart: unless-stopped
+
+  worker:
+    build: .
+    environment:
+      REDIS_URL: redis://blast_redis:6379/0
+      DOWNLOAD_DIR: /data
+      JOB_TTL_HOURS: "24"
+    volumes:
+      - baixar_data:/data
+    command: ["python", "-m", "app.worker"]
+    restart: unless-stopped
+
+  cleaner:
+    build: .
+    environment:
+      REDIS_URL: redis://blast_redis:6379/0
+      DOWNLOAD_DIR: /data
+      JOB_TTL_HOURS: "24"
+      CLEAN_INTERVAL_SECONDS: "3600"
+    volumes:
+      - baixar_data:/data
+    command: ["python", "-m", "app.cleaner"]
+    restart: unless-stopped
+
+volumes:
+  baixar_data:
