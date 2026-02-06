@@ -5,6 +5,7 @@ import os
 import time
 
 from redis import Redis
+from redis.exceptions import ConnectionError
 
 from app.settings import settings
 
@@ -51,7 +52,14 @@ def cleanup_once() -> None:
 def main() -> None:
     interval = int(os.getenv("CLEAN_INTERVAL_SECONDS", str(settings.clean_interval_seconds)))
     while True:
-        cleanup_once()
+        try:
+            cleanup_once()
+        except ConnectionError:
+            # Redis/network may not be ready yet; retry later.
+            pass
+        except Exception:
+            # Keep the container alive even if a cleanup iteration fails.
+            pass
         time.sleep(interval)
 
 

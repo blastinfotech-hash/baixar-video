@@ -1,8 +1,18 @@
 services:
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
   web:
     build: .
     environment:
-      REDIS_URL: redis://blast_redis:6379/0
+      # Default: use the Redis that ships with this compose file.
+      # If you really want to use an external Redis, override this to e.g.
+      # redis://blast_redis:6379/0 (and ensure network/DNS works in EasyPanel).
+      REDIS_URL: redis://redis:6379/0
       DOWNLOAD_DIR: /data
       JOB_TTL_HOURS: "24"
       CLEAN_INTERVAL_SECONDS: "3600"
@@ -19,7 +29,7 @@ services:
   worker:
     build: .
     environment:
-      REDIS_URL: redis://blast_redis:6379/0
+      REDIS_URL: redis://redis:6379/0
       DOWNLOAD_DIR: /data
       JOB_TTL_HOURS: "24"
     volumes:
@@ -30,7 +40,7 @@ services:
   cleaner:
     build: .
     environment:
-      REDIS_URL: redis://blast_redis:6379/0
+      REDIS_URL: redis://redis:6379/0
       DOWNLOAD_DIR: /data
       JOB_TTL_HOURS: "24"
       CLEAN_INTERVAL_SECONDS: "3600"
@@ -41,3 +51,4 @@ services:
 
 volumes:
   baixar_data:
+  redis_data:

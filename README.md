@@ -24,3 +24,7 @@ Open:
 
 Create one app called `baixar` using Docker Compose from this folder.
 Point `baixar.blastinfo.cloud` to the `web` service port `8090`.
+
+Notes:
+- This compose ships with its own Redis service (no external dependency).
+- If you prefer using an existing Redis (e.g. `blast_redis:6379`), override `REDIS_URL` and ensure the app can resolve that hostname in the same Docker network.
