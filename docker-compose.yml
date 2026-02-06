@@ -22,9 +22,9 @@ services:
       PORT: "8090"
     volumes:
       - baixar_data:/data
-    # Bind only on host loopback for safety; EasyPanel proxy can still reach it.
-    ports:
-      - "127.0.0.1:8090:8090"
+    # EasyPanel routes to the container port; do not publish host ports here.
+    expose:
+      - "8090"
     restart: unless-stopped
 
   worker:
