@@ -20,6 +20,8 @@ services:
       BASIC_AUTH_USER: ""
       BASIC_AUTH_PASS: ""
       PORT: "8090"
+      # Set to 1 to enable /api/debug/ydlp
+      APP_DEBUG: ${APP_DEBUG:-}
     volumes:
       - baixar_data:/data
     # EasyPanel routes to the container port; do not publish host ports here.

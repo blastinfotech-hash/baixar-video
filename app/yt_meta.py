@@ -24,6 +24,8 @@ def list_formats(url: str) -> dict[str, Any]:
         "noplaylist": True,
         # Avoid unexpected global config (e.g. format overrides)
         "ignoreconfig": True,
+        # Be explicit: some environments end up with an implicit format constraint.
+        "format": "best",
     }
 
     cookiefile = ensure_cookiefile()
@@ -36,17 +38,7 @@ def list_formats(url: str) -> dict[str, Any]:
             info = ydl.extract_info(url, download=False)
             return cast(dict[str, Any], dict(info))
 
-    try:
-        info = extract(ydl_opts)
-    except Exception as e:
-        # Some environments end up with an implicit/leftover format constraint.
-        # Retry with a safe default.
-        if "Requested format is not available" in str(e):
-            retry_opts = dict(ydl_opts)
-            retry_opts["format"] = "best"
-            info = extract(retry_opts)
-        else:
-            raise
+    info = extract(ydl_opts)
 
     fmts = info.get("formats") or []
 

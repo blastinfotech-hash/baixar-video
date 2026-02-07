@@ -11,6 +11,7 @@ from app.queueing import enqueue_download, get_job_state
 from app.settings import settings
 from app.cookies import ensure_cookiefile
 from app.yt_meta import list_formats
+from app.debug_ydlp import run_ydlp_debug
 
 
 security = HTTPBasic(auto_error=False)
@@ -269,6 +270,19 @@ def cookie_status() -> dict:
         return {"enabled": True, "path": path, "size": int(st.st_size)}
     except Exception:
         return {"enabled": True, "path": path}
+
+
+@app.post("/api/debug/ydlp", dependencies=[Depends(optional_basic_auth)])
+def api_debug_ydlp(payload: dict) -> dict:
+    # Enable explicitly to avoid accidental exposure.
+    if (os.getenv("APP_DEBUG") or "").strip() not in ("1", "true", "yes"):
+        raise HTTPException(status_code=404, detail="not found")
+
+    url = (payload.get("url") or "").strip()
+    if not url:
+        raise HTTPException(status_code=400, detail="url required")
+
+    return run_ydlp_debug(url)
 
 
 @app.get("/", response_class=HTMLResponse, dependencies=[Depends(optional_basic_auth)])

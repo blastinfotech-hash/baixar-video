@@ -65,6 +65,7 @@ def run_download(
         "skip_download": True,
         "noplaylist": True,
         "ignoreconfig": True,
+        "format": "best",
     }
 
     cookiefile = ensure_cookiefile()
@@ -75,15 +76,7 @@ def run_download(
             info = ydl.extract_info(url, download=False)
             return dict(info)
 
-    try:
-        info = extract_meta(ydl_meta_opts)
-    except Exception as e:
-        if "Requested format is not available" in str(e):
-            retry_meta = dict(ydl_meta_opts)
-            retry_meta["format"] = "best"
-            info = extract_meta(retry_meta)
-        else:
-            raise
+    info = extract_meta(ydl_meta_opts)
 
     title = (info.get("title") or "").strip()
     safe_title = _safe_filename(title)
