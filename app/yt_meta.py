@@ -31,8 +31,21 @@ def list_formats(url: str) -> dict[str, Any]:
     if cookiefile:
         ydl_opts["cookiefile"] = cookiefile
 
-    with yt_dlp.YoutubeDL(cast(Any, ydl_opts)) as ydl:
-        info = ydl.extract_info(url, download=False)
+    def extract(opts: dict[str, Any]) -> dict[str, Any]:
+        with yt_dlp.YoutubeDL(cast(Any, opts)) as ydl:
+            return ydl.extract_info(url, download=False)
+
+    try:
+        info = extract(ydl_opts)
+    except Exception as e:
+        # Some environments end up with an implicit/leftover format constraint.
+        # Retry with a safe default.
+        if "Requested format is not available" in str(e):
+            retry_opts = dict(ydl_opts)
+            retry_opts["format"] = "best"
+            info = extract(retry_opts)
+        else:
+            raise
 
     fmts = info.get("formats") or []
 

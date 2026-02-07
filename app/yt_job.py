@@ -70,8 +70,19 @@ def run_download(
     cookiefile = ensure_cookiefile()
     if cookiefile:
         ydl_meta_opts["cookiefile"] = cookiefile
-    with yt_dlp.YoutubeDL(ydl_meta_opts) as ydl:
-        info = ydl.extract_info(url, download=False)
+    def extract_meta(opts: dict[str, Any]) -> dict[str, Any]:
+        with yt_dlp.YoutubeDL(opts) as ydl:
+            return ydl.extract_info(url, download=False)
+
+    try:
+        info = extract_meta(ydl_meta_opts)
+    except Exception as e:
+        if "Requested format is not available" in str(e):
+            retry_meta = dict(ydl_meta_opts)
+            retry_meta["format"] = "best"
+            info = extract_meta(retry_meta)
+        else:
+            raise
 
     title = (info.get("title") or "").strip()
     safe_title = _safe_filename(title)
