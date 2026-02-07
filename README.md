@@ -23,7 +23,7 @@ Open:
 ## EasyPanel
 
 Create one app called `baixar` using Docker Compose from this folder.
-Point `baixar.blastinfo.cloud` to the `web` service port `8090`.
+Point `baixar.blastinfo.cloud` to the `baixar_web` service port `8090`.
 
 Notes:
 - This compose ships with its own Redis service (no external dependency).

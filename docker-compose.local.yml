@@ -1,4 +1,4 @@
 services:
-  web:
+  baixar_web:
     ports:
       - "8090:8090"
