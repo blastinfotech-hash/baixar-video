@@ -19,8 +19,8 @@ services:
       PUBLIC_BASE_URL: "https://baixar.blastinfo.cloud"
       # Optional: provide YouTube cookies to bypass bot-check.
       # YTDLP_COOKIES: /data/cookies.txt
-      YTDLP_COOKIES: ""
-      YTDLP_COOKIES_B64: ""
+      YTDLP_COOKIES: ${YTDLP_COOKIES:-}
+      YTDLP_COOKIES_B64: ${YTDLP_COOKIES_B64:-}
       BASIC_AUTH_USER: ""
       BASIC_AUTH_PASS: ""
       PORT: "8090"
@@ -37,8 +37,8 @@ services:
       REDIS_URL: redis://redis:6379/0
       DOWNLOAD_DIR: /data
       JOB_TTL_HOURS: "24"
-      YTDLP_COOKIES: ""
-      YTDLP_COOKIES_B64: ""
+      YTDLP_COOKIES: ${YTDLP_COOKIES:-}
+      YTDLP_COOKIES_B64: ${YTDLP_COOKIES_B64:-}
     volumes:
       - baixar_data:/data
     command: ["python", "-m", "app.worker"]
