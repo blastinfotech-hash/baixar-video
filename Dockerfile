@@ -13,6 +13,9 @@ WORKDIR /app
 COPY requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
+# Ensure latest yt-dlp at build time (YouTube changes frequently)
+RUN pip install --no-cache-dir -U yt-dlp
+
 COPY app /app/app
 
 RUN mkdir -p /data
