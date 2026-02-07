@@ -138,12 +138,39 @@ def run_download(
             # shouldn't happen in auto mode (we do not show audio-only formats there)
             ydl_opts["format"] = "best"
 
-    try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+    def attempt_download(opts: dict[str, Any]) -> None:
+        with yt_dlp.YoutubeDL(opts) as ydl:
             ydl.extract_info(url, download=True)
+
+    try:
+        attempt_download(ydl_opts)
     except Exception as e:
-        set_state({"status": "failed", "progress": 0, "error": str(e), "message": "failed"})
-        raise
+        msg = str(e)
+
+        # Common edge case: formats may differ between listing and download.
+        # Retry with a height-based selector.
+        if "Requested format is not available" in msg and mode != "audio_mp3":
+            h = selected.get("height")
+            try:
+                h_int = int(h) if h else 0
+            except Exception:
+                h_int = 0
+
+            retry_opts = dict(ydl_opts)
+            if h_int:
+                retry_opts["format"] = f"bestvideo[height<={h_int}]+bestaudio/best"
+            else:
+                retry_opts["format"] = "bestvideo+bestaudio/best"
+
+            set_state({"status": "downloading", "progress": 2, "message": "retrying with fallback format"})
+            try:
+                attempt_download(retry_opts)
+            except Exception as e2:
+                set_state({"status": "failed", "progress": 0, "error": str(e2), "message": "failed"})
+                raise
+        else:
+            set_state({"status": "failed", "progress": 0, "error": msg, "message": "failed"})
+            raise
 
     produced = None
     for name in os.listdir(download_dir):

@@ -46,4 +46,10 @@ def ensure_cookiefile() -> str:
     if cookie_path and Path(cookie_path).exists():
         return cookie_path
 
+    # Convenience fallback: if a cookies.txt exists in the shared volume,
+    # use it even if env vars are not set (helps when only one service got env).
+    default_path = Path(download_dir) / "cookies.txt"
+    if default_path.exists():
+        return str(default_path)
+
     return ""

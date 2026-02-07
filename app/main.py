@@ -39,6 +39,9 @@ INDEX_HTML = Template(
     h1{ font-size:20px; margin:0 0 12px; letter-spacing:.4px; }
     .row{ display:flex; gap:10px; flex-wrap:wrap; }
     input, select, button{ border-radius:10px; border:1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color:var(--text); padding:10px 12px; }
+    select{ -webkit-appearance: none; appearance: none; color-scheme: dark; background: rgba(255,255,255,.06); }
+    option{ background:#0b0f1a; color:#e7efff; }
+    select:focus, input:focus, button:focus{ outline: 2px solid rgba(67,211,165,.35); outline-offset: 2px; }
     input{ flex:1; min-width:260px; }
     button{ cursor:pointer; background: linear-gradient(180deg, rgba(67,211,165,.22), rgba(67,211,165,.12)); border-color: rgba(67,211,165,.45); }
     button:disabled{ opacity:.55; cursor:not-allowed; }
