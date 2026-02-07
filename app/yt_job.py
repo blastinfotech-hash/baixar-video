@@ -64,6 +64,7 @@ def run_download(
         "no_warnings": True,
         "skip_download": True,
         "noplaylist": True,
+        "ignoreconfig": True,
     }
 
     cookiefile = ensure_cookiefile()
@@ -113,6 +114,7 @@ def run_download(
         "quiet": True,
         "no_warnings": True,
         "noplaylist": True,
+        "ignoreconfig": True,
         "outtmpl": outtmpl,
         "progress_hooks": [hook],
     }

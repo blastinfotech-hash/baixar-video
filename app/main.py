@@ -9,6 +9,7 @@ from jinja2 import Template
 
 from app.queueing import enqueue_download, get_job_state
 from app.settings import settings
+from app.cookies import ensure_cookiefile
 from app.yt_meta import list_formats
 
 
@@ -39,7 +40,7 @@ INDEX_HTML = Template(
     h1{ font-size:20px; margin:0 0 12px; letter-spacing:.4px; }
     .row{ display:flex; gap:10px; flex-wrap:wrap; }
     input, select, button{ border-radius:10px; border:1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color:var(--text); padding:10px 12px; }
-    select{ -webkit-appearance: none; appearance: none; color-scheme: dark; background: rgba(255,255,255,.06); }
+    select{ -webkit-appearance: none; appearance: none; color-scheme: dark; background-color: rgba(255,255,255,.06); }
     option{ background:#0b0f1a; color:#e7efff; }
     select:focus, input:focus, button:focus{ outline: 2px solid rgba(67,211,165,.35); outline-offset: 2px; }
     input{ flex:1; min-width:260px; }
@@ -256,6 +257,18 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 @app.get("/health")
 def health() -> dict:
     return {"ok": True}
+
+
+@app.get("/api/cookies/status", dependencies=[Depends(optional_basic_auth)])
+def cookie_status() -> dict:
+    path = ensure_cookiefile()
+    if not path:
+        return {"enabled": False}
+    try:
+        st = os.stat(path)
+        return {"enabled": True, "path": path, "size": int(st.st_size)}
+    except Exception:
+        return {"enabled": True, "path": path}
 
 
 @app.get("/", response_class=HTMLResponse, dependencies=[Depends(optional_basic_auth)])

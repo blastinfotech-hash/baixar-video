@@ -23,6 +23,8 @@ def list_formats(url: str) -> dict[str, Any]:
         "no_warnings": True,
         "skip_download": True,
         "noplaylist": True,
+        # Avoid unexpected global config (e.g. format overrides)
+        "ignoreconfig": True,
     }
 
     cookiefile = ensure_cookiefile()
