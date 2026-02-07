@@ -6,7 +6,7 @@ services:
       - redis_data:/data
     restart: unless-stopped
 
-  baixar_web:
+  web:
     build: .
     environment:
       # Default: use the Redis that ships with this compose file.
@@ -27,7 +27,7 @@ services:
       - "8090"
     restart: unless-stopped
 
-  baixar_worker:
+  worker:
     build: .
     environment:
       REDIS_URL: redis://redis:6379/0
@@ -38,7 +38,7 @@ services:
     command: ["python", "-m", "app.worker"]
     restart: unless-stopped
 
-  baixar_cleaner:
+  cleaner:
     build: .
     environment:
       REDIS_URL: redis://redis:6379/0
