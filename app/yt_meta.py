@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
-from typing import cast
+from typing import Any, cast
 
 from app.cookies import ensure_cookiefile
 
@@ -33,7 +32,9 @@ def list_formats(url: str) -> dict[str, Any]:
 
     def extract(opts: dict[str, Any]) -> dict[str, Any]:
         with yt_dlp.YoutubeDL(cast(Any, opts)) as ydl:
-            return ydl.extract_info(url, download=False)
+            # yt-dlp returns a typed InfoDict; treat as plain dict.
+            info = ydl.extract_info(url, download=False)
+            return cast(dict[str, Any], dict(info))
 
     try:
         info = extract(ydl_opts)
@@ -49,46 +50,34 @@ def list_formats(url: str) -> dict[str, Any]:
 
     fmts = info.get("formats") or []
 
-    video_formats: list[dict[str, Any]] = []
-    audio_formats: list[dict[str, Any]] = []
-
+    # Format IDs on YouTube can be brittle (can change between listing and download).
+    # For an internal tool, it's more reliable to let users choose a target resolution
+    # and download using a selector: bestvideo[height<=X]+bestaudio/best
+    heights: set[int] = set()
     for f in fmts:
-        fmt_id = str(f.get("format_id") or "").strip()
-        if not fmt_id:
-            continue
-
-        ext = (f.get("ext") or "").strip()
         vcodec = f.get("vcodec") or "none"
-        acodec = f.get("acodec") or "none"
-        height = int(f.get("height") or 0)
-        fps = f.get("fps") or 0
-        abr = f.get("abr") or 0
-        filesize = f.get("filesize") or f.get("filesize_approx") or 0
-        size = _size_mb(filesize)
+        if vcodec == "none":
+            continue
+        h = int(f.get("height") or 0)
+        if h:
+            heights.add(h)
 
-        if vcodec != "none":
-            # prefer formats that include a height
-            label = f"{height}p" if height else "video"
-            label = f"{label} {fps}fps" if fps else label
-            label = f"{label} {ext}" if ext else label
-            if acodec != "none":
-                label = f"{label} (va)"
-            else:
-                label = f"{label} (v)"
-            if size:
-                label = f"{label} {size}"
-            label = f"{label} id={fmt_id}"
-            video_formats.append({"format_id": fmt_id, "label": label, "height": height})
-        elif acodec != "none":
-            label = f"{int(abr)}kbps" if abr else "audio"
-            label = f"{label} {ext}" if ext else label
-            if size:
-                label = f"{label} {size}"
-            label = f"{label} id={fmt_id}"
-            audio_formats.append({"format_id": fmt_id, "label": label, "abr": abr})
+    video_formats: list[dict[str, Any]] = []
+    for h in sorted(heights, reverse=True):
+        video_formats.append(
+            {
+                "format_id": f"h:{h}",
+                "label": f"{h}p (best video <= {h}p + best audio)",
+                "height": h,
+            }
+        )
 
-    video_formats.sort(key=lambda x: int(x.get("height") or 0), reverse=True)
-    audio_formats.sort(key=lambda x: float(x.get("abr") or 0), reverse=True)
+    # Always offer an automatic best option
+    video_formats.append({"format_id": "best", "label": "Melhor disponivel (auto)", "height": 0})
+
+    audio_formats: list[dict[str, Any]] = [
+        {"format_id": "bestaudio", "label": "Melhor audio (para MP3)", "abr": 0}
+    ]
 
     return {
         "title": info.get("title") or "",

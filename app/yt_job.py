@@ -72,7 +72,8 @@ def run_download(
         ydl_meta_opts["cookiefile"] = cookiefile
     def extract_meta(opts: dict[str, Any]) -> dict[str, Any]:
         with yt_dlp.YoutubeDL(opts) as ydl:
-            return ydl.extract_info(url, download=False)
+            info = ydl.extract_info(url, download=False)
+            return dict(info)
 
     try:
         info = extract_meta(ydl_meta_opts)
@@ -134,22 +135,33 @@ def run_download(
         ydl_opts["cookiefile"] = cookiefile
 
     if mode == "audio_mp3":
-        # Allow choosing a specific audio format id, but keep it safe.
-        ydl_opts["format"] = format_id
+        # Keep it robust: always choose bestaudio when converting to mp3.
+        ydl_opts["format"] = "bestaudio/best"
         ydl_opts["postprocessors"] = [
             {"key": "FFmpegExtractAudio", "preferredcodec": "mp3", "preferredquality": "0"}
         ]
     else:
         ydl_opts["merge_output_format"] = container
-        if vcodec != "none" and acodec != "none":
-            # already has audio+video
-            ydl_opts["format"] = format_id
-        elif vcodec != "none" and acodec == "none":
-            # video only, merge bestaudio
-            ydl_opts["format"] = f"{format_id}+bestaudio/best"
+        # Prefer height-based selectors (format_id can be brittle).
+        if str(format_id).startswith("h:"):
+            try:
+                h_int = int(str(format_id).split(":", 1)[1])
+            except Exception:
+                h_int = 0
+            if h_int:
+                ydl_opts["format"] = f"bestvideo[height<={h_int}]+bestaudio/best"
+            else:
+                ydl_opts["format"] = "bestvideo+bestaudio/best"
+        elif str(format_id) == "best":
+            ydl_opts["format"] = "bestvideo+bestaudio/best"
         else:
-            # shouldn't happen in auto mode (we do not show audio-only formats there)
-            ydl_opts["format"] = "best"
+            # Back-compat: if someone passes a real format id.
+            if vcodec != "none" and acodec != "none":
+                ydl_opts["format"] = format_id
+            elif vcodec != "none" and acodec == "none":
+                ydl_opts["format"] = f"{format_id}+bestaudio/best"
+            else:
+                ydl_opts["format"] = "bestvideo+bestaudio/best"
 
     def attempt_download(opts: dict[str, Any]) -> None:
         with yt_dlp.YoutubeDL(opts) as ydl:
