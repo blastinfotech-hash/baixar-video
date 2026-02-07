@@ -28,3 +28,14 @@ Point `baixar.blastinfo.cloud` to the `web` service port `8090`.
 Notes:
 - This compose ships with its own Redis service (no external dependency).
 - If you prefer using an existing Redis (e.g. `blast_redis:6379`), override `REDIS_URL` and ensure the app can resolve that hostname in the same Docker network.
+
+## YouTube bot-check
+
+If you see `Sign in to confirm you're not a bot`, you must provide cookies.
+
+- Export a `cookies.txt` (Netscape format) from a logged-in browser session.
+- Put it on the mounted volume (example path): `/data/cookies.txt`
+- Set env var: `YTDLP_COOKIES=/data/cookies.txt`
+
+Alternative:
+- Set `YTDLP_COOKIES_B64` to a base64-encoded cookies.txt content.

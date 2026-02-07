@@ -7,6 +7,8 @@ from typing import Any
 from redis import Redis
 from rq import get_current_job
 
+from app.cookies import ensure_cookiefile
+
 
 def _safe_filename(s: str) -> str:
     s = (s or "").strip()
@@ -64,9 +66,9 @@ def run_download(
         "noplaylist": True,
     }
 
-    cookies = (os.getenv("YTDLP_COOKIES") or "").strip()
-    if cookies:
-        ydl_meta_opts["cookiefile"] = cookies
+    cookiefile = ensure_cookiefile()
+    if cookiefile:
+        ydl_meta_opts["cookiefile"] = cookiefile
     with yt_dlp.YoutubeDL(ydl_meta_opts) as ydl:
         info = ydl.extract_info(url, download=False)
 
@@ -115,8 +117,8 @@ def run_download(
         "progress_hooks": [hook],
     }
 
-    if cookies:
-        ydl_opts["cookiefile"] = cookies
+    if cookiefile:
+        ydl_opts["cookiefile"] = cookiefile
 
     if mode == "audio_mp3":
         # Allow choosing a specific audio format id, but keep it safe.

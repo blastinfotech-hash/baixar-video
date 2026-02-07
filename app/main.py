@@ -24,7 +24,7 @@ INDEX_HTML = Template(
   <title>baixar</title>
   <style>
     :root { --bg:#0b1220; --card:#121b2f; --muted:#9bb0d1; --text:#e7efff; --acc:#43d3a5; --danger:#ff6b6b; }
-    body{ margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; background: radial-gradient(1200px 600px at 10% 10%, #16244b 0%, var(--bg) 60%); color:var(--text); }
+    body{ margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; background: linear-gradient(180deg, #050505 0%, #1a1a1a 100%); color:var(--text); }
     .wrap{ max-width:980px; margin:40px auto; padding:0 16px; }
     .card{ background: rgba(18,27,47,.92); border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:18px; box-shadow: 0 20px 60px rgba(0,0,0,.35); }
     h1{ font-size:20px; margin:0 0 12px; letter-spacing:.4px; }
@@ -45,7 +45,7 @@ INDEX_HTML = Template(
 <body>
   <div class="wrap">
     <div class="card">
-      <h1>baixar (uso interno)</h1>
+      <h1>Baixar vídeo do YouTube</h1>
       <div class="row">
         <input id="url" placeholder="Cole o link do YouTube aqui" />
         <button id="btnFormats">Buscar formatos</button>

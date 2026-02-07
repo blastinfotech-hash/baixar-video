@@ -1,7 +1,9 @@
 from __future__ import annotations
 
-import os
 from typing import Any
+from typing import cast
+
+from app.cookies import ensure_cookiefile
 
 
 def _size_mb(filesize: int | float | None) -> str:
@@ -16,18 +18,18 @@ def _size_mb(filesize: int | float | None) -> str:
 def list_formats(url: str) -> dict[str, Any]:
     import yt_dlp
 
-    ydl_opts = {
+    ydl_opts: dict[str, Any] = {
         "quiet": True,
         "no_warnings": True,
         "skip_download": True,
         "noplaylist": True,
     }
 
-    cookies = (os.getenv("YTDLP_COOKIES") or "").strip()
-    if cookies:
-        ydl_opts["cookiefile"] = cookies
+    cookiefile = ensure_cookiefile()
+    if cookiefile:
+        ydl_opts["cookiefile"] = cookiefile
 
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+    with yt_dlp.YoutubeDL(cast(Any, ydl_opts)) as ydl:
         info = ydl.extract_info(url, download=False)
 
     fmts = info.get("formats") or []
