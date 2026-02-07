@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from typing import Any
 
 
@@ -21,6 +22,10 @@ def list_formats(url: str) -> dict[str, Any]:
         "skip_download": True,
         "noplaylist": True,
     }
+
+    cookies = (os.getenv("YTDLP_COOKIES") or "").strip()
+    if cookies:
+        ydl_opts["cookiefile"] = cookies
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)

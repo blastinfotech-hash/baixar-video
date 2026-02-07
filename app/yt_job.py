@@ -63,6 +63,10 @@ def run_download(
         "skip_download": True,
         "noplaylist": True,
     }
+
+    cookies = (os.getenv("YTDLP_COOKIES") or "").strip()
+    if cookies:
+        ydl_meta_opts["cookiefile"] = cookies
     with yt_dlp.YoutubeDL(ydl_meta_opts) as ydl:
         info = ydl.extract_info(url, download=False)
 
@@ -110,6 +114,9 @@ def run_download(
         "outtmpl": outtmpl,
         "progress_hooks": [hook],
     }
+
+    if cookies:
+        ydl_opts["cookiefile"] = cookies
 
     if mode == "audio_mp3":
         # Allow choosing a specific audio format id, but keep it safe.

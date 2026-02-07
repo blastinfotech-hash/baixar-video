@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import os
 
-from fastapi import Depends, FastAPI, HTTPException
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from jinja2 import Template
 
@@ -94,6 +94,24 @@ const linkLine = document.getElementById('linkLine');
 
 let cachedFormats = null;
 
+async function readJsonResponse(res) {
+  const text = await res.text();
+  let data = null;
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch (e) {
+    data = null;
+  }
+  if (!res.ok) {
+    const msg = (data && (data.detail || data.error)) ? (data.detail || data.error) : (text || `HTTP ${res.status}`);
+    throw new Error(msg);
+  }
+  if (data === null) {
+    throw new Error('Resposta invalida do servidor');
+  }
+  return data;
+}
+
 function showStatus(text, pct, linkHtml, isError=false) {
   statusBox.style.display = 'block';
   statusLine.innerHTML = isError ? `<span class="err">${text}</span>` : text;
@@ -141,8 +159,7 @@ btnFormats.addEventListener('click', async () => {
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({url})
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || 'Falha ao buscar formatos');
+    const data = await readJsonResponse(res);
     cachedFormats = data;
     renderFormatOptions();
     btnDownload.disabled = false;
@@ -172,14 +189,12 @@ btnDownload.addEventListener('click', async () => {
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({url, format_id, container, mode})
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || 'Falha ao enfileirar');
+    const data = await readJsonResponse(res);
 
     const jobId = data.job_id;
     const poll = async () => {
       const r = await fetch(`/api/jobs/${jobId}`);
-      const s = await r.json();
-      if (!r.ok) throw new Error(s.detail || 'Falha ao consultar status');
+      const s = await readJsonResponse(r);
 
       const pct = s.progress || 0;
       if (s.status === 'finished') {
@@ -220,6 +235,12 @@ def optional_basic_auth(credentials: HTTPBasicCredentials = Depends(security)) -
 app = FastAPI()
 
 
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    # Frontend expects JSON; keep error responses JSON even for 500s.
+    return JSONResponse(status_code=500, content={"detail": "Internal Server Error", "error": str(exc)})
+
+
 @app.get("/health")
 def health() -> dict:
     return {"ok": True}
@@ -235,7 +256,13 @@ def api_formats(payload: dict) -> dict:
     url = (payload.get("url") or "").strip()
     if not url:
         raise HTTPException(status_code=400, detail="url required")
-    return list_formats(url)
+    try:
+        return list_formats(url)
+    except HTTPException:
+        raise
+    except Exception as e:
+        # yt-dlp errors are common (age restriction, bot check, etc.)
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @app.post("/api/jobs", dependencies=[Depends(optional_basic_auth)])
@@ -252,8 +279,11 @@ def api_jobs(payload: dict) -> dict:
     if mode not in ("auto", "audio_mp3"):
         raise HTTPException(status_code=400, detail="invalid mode")
 
-    job_id = enqueue_download(url=url, format_id=format_id, container=container, mode=mode)
-    return {"job_id": job_id}
+    try:
+        job_id = enqueue_download(url=url, format_id=format_id, container=container, mode=mode)
+        return {"job_id": job_id}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @app.get("/api/jobs/{job_id}", dependencies=[Depends(optional_basic_auth)])
